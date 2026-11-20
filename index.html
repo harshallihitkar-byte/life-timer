@@ -60,6 +60,8 @@
     border-radius: 980px; padding: 13px 26px; cursor: pointer; transition: background .2s;
   }
   button:hover { background: #0077ed; }
+  button.secondary { background: transparent; color: #0071e3; border: 1px solid #0071e3; }
+  button.secondary:hover { background: rgba(0,113,227,0.08); }
   /* Countdown */
   .timer { display: flex; flex-wrap: wrap; justify-content: center; gap: 28px; margin-top: 24px; }
   .unit { text-align: center; min-width: 90px; }
@@ -122,6 +124,7 @@
       <label>Birth date <input type="date" id="birth"></label>
       <label>Target age <input type="number" id="age" value="80" min="1" max="120" style="width:110px"></label>
       <button onclick="start()">Start countdown</button>
+      <button class="secondary" onclick="resetAll()">Reset</button>
     </div>
     <!-- HOW YOU LIVE: these drive the practical numbers -->
     <div class="settings">
@@ -203,7 +206,8 @@ function start() {
   var targetAge = Number(document.getElementById("age").value);
   if (!birthValue || !targetAge) { alert("Enter your birth date and target age"); return; }
 
-  // Remember the inputs in the browser so you don't retype them
+
+  // Remember the inputs on THIS device only, so the timer is there next time
   localStorage.setItem("birth", birthValue);
   localStorage.setItem("age", targetAge);
   for (var k = 0; k < SETTINGS.length; k++) {
@@ -289,7 +293,7 @@ function showQuote() {
 
 function setText(id, value) { document.getElementById(id).textContent = value; }
 
-// ---------- ON OPEN: reload saved inputs ----------
+// ---------- ON OPEN: reload this device's saved inputs (new devices start empty) ----------
 if (localStorage.getItem("birth")) {
   document.getElementById("birth").value = localStorage.getItem("birth");
   document.getElementById("age").value = localStorage.getItem("age");
@@ -297,6 +301,21 @@ if (localStorage.getItem("birth")) {
     if (localStorage.getItem(SETTINGS[k])) document.getElementById(SETTINGS[k]).value = localStorage.getItem(SETTINGS[k]);
   }
   start();
+}
+
+// ---------- RESET: forget saved data and go back to an empty form ----------
+function resetAll() {
+  if (!confirm("Clear your saved details and start over?")) return;
+  localStorage.clear();
+  clearInterval(timer); clearInterval(quoteTimer);
+  birthDate = null; endDate = null;
+  document.getElementById("birth").value = "";
+  document.getElementById("age").value = 80;
+  document.getElementById("booksPerYear").value = 12;
+  document.getElementById("freeWeekends").value = 4;
+  document.getElementById("tripsPerYear").value = 1;
+  document.getElementById("results").classList.add("hidden");
+  window.scrollTo(0, 0);
 }
 
 // Re-calculate the numbers straight away when a setting changes
