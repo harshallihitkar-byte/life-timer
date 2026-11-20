@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Life Countdown</title>
+<!-- HOME SCREEN: these lines let the page install like an app on iPhone/Android -->
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Life">
+<meta name="theme-color" content="#f5f5f7">
+<style>
+  /* STYLE: Apple-like look. Apple's font (SF Pro) is built into Mac/iPhone;
+     on Windows it falls back to Segoe UI / Helvetica. */
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #f5f5f7; color: #1d1d1f;
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Segoe UI", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased; letter-spacing: -0.01em;
+  }
+  /* Frosted-glass top bar */
+  nav {
+    position: sticky; top: 0; z-index: 10; height: 48px;
+    display: flex; align-items: center; justify-content: center; gap: 28px;
+    background: rgba(255,255,255,0.72); backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid rgba(0,0,0,0.08); font-size: 12px; color: #424245;
+  }
+  nav b { font-weight: 600; color: #1d1d1f; }
+  nav a { color: #424245; text-decoration: none; }
+  nav a:hover { color: #0071e3; }
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 0 22px 80px; }
+  /* Hero */
+  .hero { text-align: center; padding: 72px 0 36px; }
+  .eyebrow { font-size: 21px; font-weight: 600; color: #bf4800; margin: 0 0 8px; }
+  h1 {
+    font-size: clamp(44px, 8vw, 80px); font-weight: 700; line-height: 1.05; letter-spacing: -0.03em; margin: 0;
+    background: linear-gradient(90deg, #0071e3, #7d3cff 50%, #e3366b);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .sub { font-size: 24px; color: #6e6e73; font-weight: 500; margin: 14px 0 0; }
+  .small { font-size: 17px; color: #6e6e73; }
+  /* Tiles */
+  .card {
+    background: #fff; border-radius: 28px; padding: 40px; margin: 20px 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .card.dark { background: #000; color: #f5f5f7; }
+  .card h2 { font-size: 40px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 8px; }
+  .form { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-end; justify-content: center; }
+  label { display: flex; flex-direction: column; font-size: 14px; color: #6e6e73; gap: 6px; }
+  input {
+    font: inherit; font-size: 17px; color: #1d1d1f; background: #f5f5f7;
+    border: 1px solid #d2d2d7; border-radius: 12px; padding: 12px 14px; outline: none;
+  }
+  input:focus { border-color: #0071e3; box-shadow: 0 0 0 4px rgba(0,113,227,0.15); }
+  button {
+    font: inherit; font-size: 17px; background: #0071e3; color: #fff; border: 0;
+    border-radius: 980px; padding: 13px 26px; cursor: pointer; transition: background .2s;
+  }
+  button:hover { background: #0077ed; }
+  /* Countdown */
+  .timer { display: flex; flex-wrap: wrap; justify-content: center; gap: 28px; margin-top: 24px; }
+  .unit { text-align: center; min-width: 90px; }
+  .unit b {
+    display: block; font-size: clamp(40px, 6vw, 64px); font-weight: 700; letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+    background: linear-gradient(180deg, #ffffff, #a1a1a6); -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .unit span { font-size: 14px; color: #86868b; text-transform: uppercase; letter-spacing: 0.08em; }
+  /* Progress */
+  .bar { height: 12px; background: #e8e8ed; border-radius: 980px; overflow: hidden; margin-top: 20px; }
+  .bar div { height: 100%; border-radius: 980px; background: linear-gradient(90deg, #0071e3, #7d3cff, #e3366b); transition: width 1s; }
+  /* Count tiles */
+  .counts { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+  .tile { background: #fff; border-radius: 28px; padding: 32px 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.04); }
+  .tile b { display: block; font-size: 48px; font-weight: 700; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
+  .tile span { font-size: 17px; color: #6e6e73; }
+  .tile:nth-child(1) b { color: #0071e3; }
+  .tile:nth-child(2) b { color: #bf4800; }
+  .tile:nth-child(3) b { color: #7d3cff; }
+  .tile:nth-child(4) b { color: #e3366b; }
+  /* Quote */
+  blockquote { font-size: clamp(26px, 4vw, 40px); font-weight: 600; line-height: 1.2; letter-spacing: -0.02em; margin: 0; text-align: center; transition: opacity .6s; }
+  cite { display: block; text-align: center; color: #86868b; margin-top: 18px; font-style: normal; font-size: 17px; }
+  /* Weeks grid */
+  .grid { display: grid; grid-template-columns: repeat(52, 1fr); gap: 2px; margin-top: 20px; }
+  .grid i { aspect-ratio: 1; background: #e8e8ed; border-radius: 2px; }
+  .grid i.lived { background: #1d1d1f; }
+  .grid i.now { background: #0071e3; box-shadow: 0 0 6px #0071e3; }
+  .center { text-align: center; }
+  /* Clock and weeks grid side by side (stacks on phones) */
+  .side { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: stretch; }
+  .side .card { margin: 0; }
+  .side .card.dark { display: flex; flex-direction: column; justify-content: center; }
+  .side .timer { gap: 18px; }
+  .side .unit { min-width: 70px; }
+  .side .unit b { font-size: clamp(34px, 4.4vw, 52px); }
+  .stat { color: #a1a1a6; font-size: 17px; margin-top: 26px; }
+  .grid { gap: 1.5px; }
+  @media (max-width: 820px) { .side { grid-template-columns: 1fr; } }
+  .settings { display: flex; flex-wrap: wrap; gap: 16px; justify-content: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e8e8ed; }
+  .settings input { width: 110px; }
+  #quote, #author { transition: opacity .6s; }
+  .hidden { display: none; }
+  footer { text-align: center; font-size: 12px; color: #86868b; padding: 20px; }
+</style>
+</head>
+<body>
+<nav><b>Life Countdown</b><a href="#time">Time</a><a href="#counts">Counts</a><a href="#quote">Quotes</a></nav>
+<div class="wrap">
+  <section class="hero">
+    <p class="eyebrow">Life Countdown</p>
+    <h1>Time left to use.</h1>
+    <p class="sub">Not time running out. Time still yours.</p>
+  </section>
+
+  <!-- INPUT: birth date and target age -->
+  <div class="card">
+    <div class="form">
+      <label>Birth date <input type="date" id="birth"></label>
+      <label>Target age <input type="number" id="age" value="80" min="1" max="120" style="width:110px"></label>
+      <button onclick="start()">Start countdown</button>
+    </div>
+    <!-- HOW YOU LIVE: these drive the practical numbers -->
+    <div class="settings">
+      <label>Books per year <input type="number" id="booksPerYear" value="12" min="0"></label>
+      <label>Free weekends a month <input type="number" id="freeWeekends" value="4" min="0" max="5"></label>
+      <label>Trips per year <input type="number" id="tripsPerYear" value="1" min="0"></label>
+    </div>
+  </div>
+
+  <div id="results" class="hidden">
+    <!-- CLOCK + LIFE IN WEEKS, side by side -->
+    <div class="side" id="time">
+      <div class="card dark center">
+        <h2>Time left to use.</h2>
+        <div class="timer">
+          <div class="unit"><b id="years">0</b><span>Years</span></div>
+          <div class="unit"><b id="days">0</b><span>Days</span></div>
+          <div class="unit"><b id="hours">0</b><span>Hours</span></div>
+          <div class="unit"><b id="minutes">0</b><span>Minutes</span></div>
+          <div class="unit"><b id="seconds">0</b><span>Seconds</span></div>
+        </div>
+        <p class="stat"><span id="weeksLeft">0</span> weeks still yours.</p>
+      </div>
+      <!-- LIFE IN WEEKS: one square per week, one row per year (80 years = 4,160 boxes) -->
+      <div class="card" id="weeks">
+        <h2>Your life in weeks.</h2>
+        <p class="small"><span id="weeksLived">0</span> lived, <span id="weeksTotal">0</span> in all. Blue is this week.</p>
+        <div class="grid" id="grid"></div>
+      </div>
+    </div>
+
+    <!-- PERCENT LIVED -->
+    <div class="card">
+      <h2>Progress.</h2>
+      <p class="small" id="pctText"></p>
+      <div class="bar"><div id="pctBar"></div></div>
+    </div>
+
+    <!-- PRACTICAL COUNTS, based on the "how you live" settings -->
+    <div class="counts" id="counts">
+      <div class="tile"><b id="weekends">0</b><span>free weekends left</span></div>
+      <div class="tile"><b id="summers">0</b><span>summers left</span></div>
+      <div class="tile"><b id="books">0</b><span>books left to read</span></div>
+      <div class="tile"><b id="trips">0</b><span>trips left to take</span></div>
+    </div>
+
+    <!-- QUOTE -->
+    <div class="card">
+      <blockquote id="quote"></blockquote>
+      <cite id="author"></cite>
+    </div>
+
+  </div>
+</div>
+<footer>Made with Jarvis. Inspired by Seneca, Marcus Aurelius and Camus.</footer>
+
+<script>
+// ---------- DATA ----------
+var QUOTES = [
+  { text: "It is not that we have a short time to live, but that we waste a lot of it.", author: "Seneca, On the Shortness of Life" },
+  { text: "While we are postponing, life speeds by.", author: "Seneca, Letters to Lucilius" },
+  { text: "Do not act as if you were going to live ten thousand years.", author: "Marcus Aurelius, Meditations" },
+  { text: "You could leave life right now. Let that determine what you do and say and think.", author: "Marcus Aurelius, Meditations" },
+  { text: "Begin at once to live, and count each separate day as a separate life.", author: "Seneca, Letters to Lucilius" },
+  { text: "Very little is needed to make a happy life; it is all within yourself, in your way of thinking.", author: "Marcus Aurelius, Meditations" },
+  { text: "Real generosity toward the future lies in giving all to the present.", author: "Albert Camus, The Rebel" },
+  { text: "In the depth of winter, I finally learned that within me there lay an invincible summer.", author: "Albert Camus" }
+];
+
+var MS_PER_DAY = 24 * 60 * 60 * 1000;
+var MS_PER_YEAR = 365.25 * MS_PER_DAY;
+var MS_PER_WEEK = 7 * MS_PER_DAY;
+var birthDate, endDate, quoteIndex = 0, timer, quoteTimer;
+var SETTINGS = ["booksPerYear", "freeWeekends", "tripsPerYear"];
+
+// ---------- START: like the first step of a PAD flow ----------
+function start() {
+  var birthValue = document.getElementById("birth").value;
+  var targetAge = Number(document.getElementById("age").value);
+  if (!birthValue || !targetAge) { alert("Enter your birth date and target age"); return; }
+
+  // Remember the inputs in the browser so you don't retype them
+  localStorage.setItem("birth", birthValue);
+  localStorage.setItem("age", targetAge);
+  for (var k = 0; k < SETTINGS.length; k++) {
+    localStorage.setItem(SETTINGS[k], document.getElementById(SETTINGS[k]).value);
+  }
+
+  birthDate = new Date(birthValue);
+  endDate = new Date(birthDate);
+  endDate.setFullYear(birthDate.getFullYear() + targetAge);
+
+  document.getElementById("results").classList.remove("hidden");
+  drawGrid(targetAge);
+  showQuote();
+  clearInterval(timer);
+  tick();
+  timer = setInterval(tick, 1000);          // update every second
+  clearInterval(quoteTimer);
+  quoteTimer = setInterval(showQuote, 15000); // new quote every 15 seconds
+}
+
+// ---------- TICK: runs every second, like a loop with a 1s wait ----------
+function tick() {
+  var now = new Date();
+  var left = Math.max(0, endDate - now);
+
+  var years = Math.floor(left / MS_PER_YEAR);
+  var rest = left - years * MS_PER_YEAR;
+  var days = Math.floor(rest / MS_PER_DAY); rest -= days * MS_PER_DAY;
+  var hours = Math.floor(rest / 3600000); rest -= hours * 3600000;
+  var minutes = Math.floor(rest / 60000); rest -= minutes * 60000;
+  var seconds = Math.floor(rest / 1000);
+
+  setText("years", years); setText("days", days); setText("hours", hours);
+  setText("minutes", minutes); setText("seconds", seconds);
+
+  var total = endDate - birthDate;
+  var pct = Math.min(100, ((now - birthDate) / total) * 100);
+  document.getElementById("pctBar").style.width = pct + "%";
+  document.getElementById("pctText").textContent = pct.toFixed(2) + "% lived, " + (100 - pct).toFixed(2) + "% still yours to use.";
+
+  // Practical numbers, using the "how you live" settings
+  var yearsLeft = left / MS_PER_YEAR;
+  var weeksLeft = Math.floor(left / MS_PER_WEEK);
+  var booksPerYear = Number(document.getElementById("booksPerYear").value) || 0;
+  var freeWeekends = Number(document.getElementById("freeWeekends").value) || 0;
+  var tripsPerYear = Number(document.getElementById("tripsPerYear").value) || 0;
+  setText("weeksLeft", weeksLeft.toLocaleString());
+  setText("weekends", Math.floor(yearsLeft * 12 * freeWeekends).toLocaleString());
+  setText("summers", Math.floor(yearsLeft));
+  setText("books", Math.floor(yearsLeft * booksPerYear).toLocaleString());
+  setText("trips", Math.floor(yearsLeft * tripsPerYear).toLocaleString());
+}
+
+// ---------- LIFE IN WEEKS GRID ----------
+function drawGrid(targetAge) {
+  var grid = document.getElementById("grid");
+  grid.innerHTML = "";
+  var weeksLived = Math.floor((new Date() - birthDate) / MS_PER_WEEK);
+  var totalWeeks = targetAge * 52;
+  setText("weeksLived", Math.min(weeksLived, totalWeeks).toLocaleString());
+  setText("weeksTotal", totalWeeks.toLocaleString());
+  for (var i = 0; i < totalWeeks; i++) {
+    var cell = document.createElement("i");
+    if (i < weeksLived) cell.className = "lived";
+    if (i === weeksLived) cell.className = "now";
+    grid.appendChild(cell);
+  }
+}
+
+// ---------- QUOTES ----------
+function showQuote() {
+  var q = QUOTES[quoteIndex % QUOTES.length];
+  var quoteEl = document.getElementById("quote");
+  var authorEl = document.getElementById("author");
+  quoteEl.style.opacity = 0; authorEl.style.opacity = 0;   // fade out
+  setTimeout(function () {
+    quoteEl.textContent = "\u201C" + q.text + "\u201D";
+    authorEl.textContent = "\u2014 " + q.author;
+    quoteEl.style.opacity = 1; authorEl.style.opacity = 1; // fade in
+  }, 600);
+  quoteIndex++;
+}
+
+function setText(id, value) { document.getElementById(id).textContent = value; }
+
+// ---------- ON OPEN: reload saved inputs ----------
+if (localStorage.getItem("birth")) {
+  document.getElementById("birth").value = localStorage.getItem("birth");
+  document.getElementById("age").value = localStorage.getItem("age");
+  for (var k = 0; k < SETTINGS.length; k++) {
+    if (localStorage.getItem(SETTINGS[k])) document.getElementById(SETTINGS[k]).value = localStorage.getItem(SETTINGS[k]);
+  }
+  start();
+}
+
+// Re-calculate the numbers straight away when a setting changes
+for (var k = 0; k < SETTINGS.length; k++) {
+  document.getElementById(SETTINGS[k]).addEventListener("input", function () { if (birthDate) start(); });
+}
+
+// HOME SCREEN: lets Android/Chrome install it (only works once it's hosted online)
+if ("serviceWorker" in navigator && location.protocol.indexOf("http") === 0) {
+  navigator.serviceWorker.register("sw.js");
+}
+</script>
+</body>
+</html>
