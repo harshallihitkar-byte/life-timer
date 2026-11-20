@@ -114,13 +114,14 @@
 <div class="wrap">
   <section class="hero">
     <p class="eyebrow">Life Countdown</p>
-    <h1>Time left to use.</h1>
+    <h1 id="headline">Time left to use.</h1>
     <p class="sub">Not time running out. Time still yours.</p>
   </section>
 
   <!-- INPUT: birth date and target age -->
   <div class="card">
     <div class="form">
+      <label>Your name <input type="text" id="name" placeholder="Optional" style="width:160px"></label>
       <label>Birth date <input type="date" id="birth"></label>
       <label>Target age <input type="number" id="age" value="80" min="1" max="120" style="width:110px"></label>
       <button onclick="start()">Start countdown</button>
@@ -214,6 +215,10 @@ function start() {
     localStorage.setItem(SETTINGS[k], document.getElementById(SETTINGS[k]).value);
   }
 
+  var name = document.getElementById("name").value.trim();
+  localStorage.setItem("name", name);
+  showName(name);
+
   birthDate = new Date(birthValue);
   endDate = new Date(birthDate);
   endDate.setFullYear(birthDate.getFullYear() + targetAge);
@@ -295,12 +300,19 @@ function setText(id, value) { document.getElementById(id).textContent = value; }
 
 // ---------- ON OPEN: reload this device's saved inputs (new devices start empty) ----------
 if (localStorage.getItem("birth")) {
+  document.getElementById("name").value = localStorage.getItem("name") || "";
   document.getElementById("birth").value = localStorage.getItem("birth");
   document.getElementById("age").value = localStorage.getItem("age");
   for (var k = 0; k < SETTINGS.length; k++) {
     if (localStorage.getItem(SETTINGS[k])) document.getElementById(SETTINGS[k]).value = localStorage.getItem(SETTINGS[k]);
   }
   start();
+}
+
+// ---------- NAME: personalise the headline ----------
+function showName(name) {
+  document.getElementById("headline").textContent = name ? name + ", time left to use." : "Time left to use.";
+  document.title = name ? name + "'s Life Countdown" : "Life Countdown";
 }
 
 // ---------- RESET: forget saved data and go back to an empty form ----------
@@ -310,6 +322,8 @@ function resetAll() {
   clearInterval(timer); clearInterval(quoteTimer);
   birthDate = null; endDate = null;
   document.getElementById("birth").value = "";
+  document.getElementById("name").value = "";
+  showName("");
   document.getElementById("age").value = 80;
   document.getElementById("booksPerYear").value = 12;
   document.getElementById("freeWeekends").value = 4;
