@@ -11,6 +11,13 @@
 <meta name="apple-mobile-web-app-title" content="Life Timer">
 <link rel="icon" type="image/svg+xml" href="logo.svg">
 <meta name="theme-color" content="#faf8f5">
+<script>
+  // THEME: use the saved choice, else follow the phone/computer setting
+  var savedTheme = localStorage.getItem("theme");
+  if (savedTheme === "dark" || (!savedTheme && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+    document.documentElement.classList.add("dark");
+  }
+</script>
 <style>
   /* STYLE: Apple-like look. Apple's font (SF Pro) is built into Mac/iPhone;
      on Windows it falls back to Segoe UI / Helvetica. */
@@ -209,10 +216,59 @@
     .tile { min-height: 120px; padding: 20px 14px; }
     .counts { margin: 14px 0; }
   }
+  /* THEME SWITCH (top-right of the nav) */
+  nav { position: sticky; }
+  .theme-toggle {
+    position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
+    width: 56px; height: 30px; padding: 3px; border-radius: 999px;
+    background: #e9e5df; border: 1px solid rgba(0,0,0,0.06); box-shadow: inset 0 1px 2px rgba(0,0,0,0.06);
+    cursor: pointer; transition: background .3s;
+  }
+  .theme-toggle:hover { background: #e2ddd5; }
+  .theme-toggle .knob {
+    display: flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%; background: #fff3c4; color: #b8860b;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.18); font-size: 13px; line-height: 1;
+    transition: transform .3s, background .3s, color .3s;
+  }
+  .theme-toggle .moon { display: none; }
+  @media (max-width: 560px) { .theme-toggle { right: 12px; width: 48px; height: 26px; } .theme-toggle .knob { width: 18px; height: 18px; font-size: 11px; } html.dark .theme-toggle .knob { transform: translateX(22px); } nav { padding: 0 60px; } }
+
+  /* DARK THEME (pastel on charcoal) */
+  html.dark body { background: #2b2c31; color: #ecebe8; }
+  html.dark nav { background: rgba(43,44,49,0.82); border-bottom-color: rgba(255,255,255,0.08); color: #b9b9c0; }
+  html.dark nav b { color: #ecebe8; }
+  html.dark nav a { color: #b9b9c0; }
+  html.dark nav a:hover { color: #fff; }
+  html.dark .theme-toggle { background: #42434a; border-color: rgba(255,255,255,0.08); }
+  html.dark .theme-toggle .knob { transform: translateX(26px); background: #cdc3f0; color: #2b2550; }
+  html.dark .theme-toggle .sun { display: none; }
+  html.dark .theme-toggle .moon { display: inline; }
+  html.dark .sub, html.dark .small, html.dark #pctText, html.dark cite, html.dark footer { color: #b4b4bb; }
+  html.dark .card { background: #36373d; box-shadow: 0 2px 14px rgba(0,0,0,0.22); }
+  html.dark .card h2, html.dark blockquote { color: #ecebe8; }
+  html.dark .group { color: #b4b4bb; border-top-color: #4a4b52; }
+  html.dark label { color: #b4b4bb; }
+  html.dark input { background: #42434a; border-color: #4f5058; color: #ecebe8; color-scheme: dark; }
+  html.dark .card.dark { background: #3a4656; }
+  html.dark .card.dark h2, html.dark .unit b { color: #dbe7f5; -webkit-text-fill-color: #dbe7f5; }
+  html.dark .unit span, html.dark .stat { color: #9fb3c8; }
+  html.dark .bar { background: #4a4b52; }
+  html.dark .grid i:not(.lived):not(.now) { background: #4a4b52; }
+  html.dark .tile:nth-child(1) { background: #4d3f35; } html.dark .tile:nth-child(1) b { color: #fde4d0; }
+  html.dark .tile:nth-child(2) { background: #4b4533; } html.dark .tile:nth-child(2) b { color: #fff3c4; }
+  html.dark .tile:nth-child(3) { background: #423d55; } html.dark .tile:nth-child(3) b { color: #e3dcf8; }
+  html.dark .tile:nth-child(4) { background: #34454f; } html.dark .tile:nth-child(4) b { color: #d6ecf7; }
+  html.dark .tile span { color: #b9b9c0; }
+  html.dark h1.brand { box-shadow: 0 10px 30px rgba(0,0,0,0.25); }
 </style>
 </head>
 <body>
-<nav><b>Life Timer</b><a href="#time">Time</a><a href="#counts">Counts</a><a href="#quote">Quotes</a></nav>
+<nav><b>Life Timer</b><a href="#time">Time</a><a href="#counts">Counts</a><a href="#quote">Quotes</a>
+  <button id="themeToggle" class="theme-toggle" onclick="toggleTheme()" aria-label="Switch light or dark theme" title="Light / Dark">
+    <span class="knob"><span class="sun">☀︎</span><span class="moon">☾</span></span>
+  </button>
+</nav>
 <div class="wrap">
   <section class="hero">
     <h1 id="headline" class="brand"><span class="brand-logo"><img src="logo.svg" alt=""></span><span class="brand-name">LIFE TIMER</span></h1>
@@ -396,6 +452,16 @@ function showQuote() {
 
 function setText(id, value) { document.getElementById(id).textContent = value; }
 
+// ---------- THEME SWITCH ----------
+function toggleTheme() {
+  var isDark = document.documentElement.classList.toggle("dark");
+  localStorage.setItem("theme", isDark ? "dark" : "light");
+  document.querySelector('meta[name="theme-color"]').setAttribute("content", isDark ? "#2b2c31" : "#faf8f5");
+}
+if (document.documentElement.classList.contains("dark")) {
+  document.querySelector('meta[name="theme-color"]').setAttribute("content", "#2b2c31");
+}
+
 // ---------- ON OPEN: reload this device's saved inputs (new devices start empty) ----------
 if (localStorage.getItem("birth")) {
   document.getElementById("birth").value = localStorage.getItem("birth");
@@ -413,7 +479,9 @@ function showName(name) {
 // ---------- RESET: forget saved data and go back to an empty form ----------
 function resetAll() {
   if (!confirm("Clear your saved details and start over?")) return;
+  var keepTheme = localStorage.getItem("theme");
   localStorage.clear();
+  if (keepTheme) localStorage.setItem("theme", keepTheme);
   clearInterval(timer); clearInterval(quoteTimer);
   birthDate = null; endDate = null;
   document.getElementById("birth").value = "";
